@@ -23,6 +23,7 @@ SOFTWARE.
 """
 import argparse
 from os.path import exists
+import sys
 from github import Github
 from yaml import safe_load
 import pandas as pd
@@ -48,22 +49,24 @@ _output_file = args.output_file
 
 if not exists(_filename):
     print(f"failed to find {_filename}")
-    exit(1)
+    sys.exit(1)
 
 # Parse the config.yaml file. If the file does not exist then the
 # program will not execute.
-access_token = None
+access_token = None  # pylint: disable=invalid-name
 users = []
 repos = []
 search_labels = []
+
+# pylint: disable=unspecified-encoding
 with open(_filename, "r") as yaml_file:
     data = safe_load(yaml_file.read())
 
     for key in ["access_token", "users", "repos"]:
         if key not in data:
             print(f"failed to find {key} in configuration file {_filename}")
-            exit(2)
-    
+            sys.exit(2)
+
     access_token = data["access_token"]
     users = data["users"]
     repos = data["repos"]
@@ -87,7 +90,7 @@ for repo_info in repos:
     if "owner" not in repo_info or "name" not in repo_info:
         print(f"repos must contain owner and name, skipping {repo_info}")
         continue
-    
+
     repo_owner = repo_info["owner"]
     repo_name = repo_info["name"]
     labeled_name = f"{repo_owner}.{repo_name}"
@@ -101,10 +104,10 @@ for repo_info in repos:
             labels_values = [label in labels
                 for label in search_labels
             ]
-                
+
             lgtmd = "lgtm" in labels
             approved = "approved" in labels
-            
+
             github_output[labeled_name].append(
                 [
                     pull_request.user.login,
@@ -130,9 +133,10 @@ github_output = {
     if value != []
 }
 
+# pylint: disable=abstract-class-instantiated
+writer = pd.ExcelWriter(_output_file, engine='xlsxwriter')
 # output the data to an excel file.
 # auto scale the size of the column as well for easier viewing.
-writer = pd.ExcelWriter(_output_file, engine='xlsxwriter')
 for sheetname, df in github_output.items():
     df.to_excel(writer, sheet_name=sheetname, index=False)
     worksheet = writer.sheets[sheetname]
@@ -144,4 +148,3 @@ for sheetname, df in github_output.items():
             )) + 1
         worksheet.set_column(idx, idx, max_len)
 writer.close()
-
