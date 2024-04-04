@@ -1,0 +1,18 @@
+# The following file is created to provide the github api with
+# an access token. If you need to generate an access token, please
+# visit github -> settings -> developer settings -> personal access tokens.
+# Note: the token can be limitted to read only access for all fields.
+access_token: example_github_access_token
+# All repos should include the owner and name. If either is missing, a failure
+# will occur during the process.
+repos:
+  - owner: example
+    name: example
+# The names as shown in github
+users:
+  - example
+# The labels that the user may want to see a status on. For example, the user
+# wants to know if the `lgtm` label is applied to the PR. Add `lgtm` below, and
+# true or false will be added to a column called `lgtm` in the excel output.
+labels:
+  - lgtm

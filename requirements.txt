@@ -1,0 +1,4 @@
+PyGithub
+pandas
+pyYaml
+xlsxwriter
