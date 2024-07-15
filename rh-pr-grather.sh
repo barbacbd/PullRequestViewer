@@ -24,6 +24,8 @@
 VenvPath="/home/$USER/rh-gather-venv"
 PyVersion=`python3 --version | awk '{print $2}'`
 MinPythonVersion="3.9.0"
+# temporary variable until the pypi package is available
+UsePyPi=false
 
 if [ "$(printf '%s\n' "$MinPythonVersion" "$PyVersion" | sort -V | head -n1)" = "$MinPythonVersion" ]; then 
     echo "Current python version ${PyVersion} is greater than or equal to ${MinPythonVersion}"
@@ -37,8 +39,23 @@ fi
 
 source $VenvPath/bin/activate
 
-# cover instances where the package may already be installed
-pip install rh_pr_gather --upgrade
+# temporary checks until the pypi package is available
+if "$UsePyPi" ; then
+    echo "Running the install from PyPi."
+    # cover instances where the package may already be installed
+    pip install rh_pr_gather --upgrade
+else
+    echo "Running the install from the latest version of master."
+    wget https://github.com/barbacbd/PullRequestViewer/archive/master.tar.gz
+    tar -xvzf master.tar.gz
+    cd PullRequestViewer-main
+    pip install . --upgrade
+
+    cd ..
+    echo "Removing the archives."
+    rm -rf PullRequestViewer-main
+    rm -rf master.tar.gz
+fi
 
 # if the output file currently exists then it will be deleted here.
 if [ -f "github.xlsx" ]; then
