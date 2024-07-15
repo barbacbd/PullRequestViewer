@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rh_pr_gather"
+authors = [
+	{name = "Brent Barbachem", email = "barbacbd@gmail.com"},
+]
+description = "Package to find open pull requests"
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.8"
+keywords = [
+    "python",
+    "github",
+    "python3",
+    "pull requests",
+    "PR"
+]
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "License :: Freeware",
+    "Natural Language :: English",
+    "Operating System :: MacOS :: MacOS X",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python :: 3",
+    "Topic :: Software Development"
+]
+dependencies = [
+    "PyGithub",
+    "pandas",
+    "pyYaml",
+    "xlsxwriter",
+    "inquirer",
+]
+dynamic = ["version"]
+
+[tool.setuptools]
+include-package-data = true
+
+[project.scripts]
+rh-pr-gather = "pull_request_viewer.main:main"
+
+[tool.setuptools.package-data]
+'src' = [
+    'example_config.yaml',
+]
+
+
