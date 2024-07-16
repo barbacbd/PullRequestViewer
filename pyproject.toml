@@ -41,7 +41,7 @@ dynamic = ["version"]
 include-package-data = true
 
 [project.scripts]
-rh-pr-gather = "pull_request_viewer.main:main"
+rh-pr-gather = "rh_pr_gather.main:main"
 
 [tool.setuptools.package-data]
 'src' = [
