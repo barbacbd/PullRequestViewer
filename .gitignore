@@ -1,1 +1,13 @@
+# Ignore configuration files in the base of the project
 config.yaml
+
+# The tmp directory is used when rh-pr-gather.sh must locally
+# copy the latest (main branch) code from github. This is the
+# case when the project is not uploaded to PyPi.
+tmp/
+
+# ignore the Build directory that is produced during local package building.
+build/
+
+# ignore the python egg files that are created during local package building.
+src/rh_pr_gather.egg-info/
