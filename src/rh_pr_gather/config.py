@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 import inquirer
+from yaml import dump
 
 
 def ask_for_token():
@@ -118,8 +119,10 @@ def ask_for_repos():
     return {"repos": repos}
 
 
-def create_config():
+def create_config(filename):
     """Create a configuration for a yaml config file.
+
+    :param filename: name of the configuration file that will be created.
     """
     config = {}
     for call_func in [
@@ -130,4 +133,5 @@ def create_config():
     ]:
         config.update(call_func())
     
-    return config
+    with open(filename, "w") as config_file:
+        config_file.write(dump(config, indent=2))
