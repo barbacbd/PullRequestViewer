@@ -27,24 +27,42 @@ MinPythonVersion="3.9.0"
 # temporary variable until the pypi package is available
 UsePyPi=false
 JiraConfig=false
+UseConfigFile=false
+ConfigFile="config.yaml"
+args=()
 
-while getopts pjh flag
+while getopts c:o:pjh flag
 do
     case "${flag}" in
+	c)
+	    ConfigFile=${OPTARG}
+	    UseConfigFile=true
+	    ;;
+	o) args+=("--output" "${OPTARG}");;
 	p) UsePyPi=true;;
-	j) JiraConfig=true;;
+	j) args+=("--coordinate_with_jira");;
 	h)
 	    echo "RH PR Gather"
 	    echo ""
+	    echo "  -c    ConfigFile:   Supply the full path to the configuration file (yaml)."
+	    echo "  -o    OutputFile:   Supply the name of the output file (xlsx)."
 	    echo "  -p    UsePyPi:      When applied, the package will be pulled from PyPi."
 	    echo "                      Default behavior will pull the latest code from the"
 	    echo "                      main branch of the github project."
-	    echo " -j     JiraConfig:   When applied, Jira configuration information will be"
+	    echo "  -j     JiraConfig:  When applied, Jira configuration information will be"
 	    echo "                      prompted."
-	    echo " -h     Help"
+	    echo "  -h     Help"
 	    exit 1
     esac
 done
+
+
+
+if "$UseConfigFile" ; then
+    args+=("--input" "$ConfigFile")
+else
+    args+=("--config")
+fi
 
 if [ "$(printf '%s\n' "$MinPythonVersion" "$PyVersion" | sort -V | head -n1)" = "$MinPythonVersion" ]; then 
     echo "Current python version ${PyVersion} is greater than or equal to ${MinPythonVersion}"
@@ -81,19 +99,8 @@ if [ -f "github.xlsx" ]; then
     rm github.xlsx
 fi
 
-# if a a configuration file is found, skip running the configuration step to
-# generate a new configuration file. Warn when this is happens so that the user
-# knows why this was skipped.
-if [ -f "config.yaml" ]; then
-    echo "WARN: config.yaml found. Skipping the config step for rh-pr-gather"
-    rh-pr-gather --input config.yaml
-else
-    if "$JiraConfig" ; then
-	rh-pr-gather --config --coordinate_with_jira
-    else
-	rh-pr-gather --config
-    fi
-fi
+# supply all of the args (compiled as a list above) to the executable
+rh-pr-gather ${args[@]}
 
 deactivate
 
