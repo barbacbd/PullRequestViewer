@@ -25,14 +25,17 @@ import inquirer
 from yaml import dump
 
 
-def ask_for_token():
+def ask_for_github_token():
     """Ask the user for their github access token.
+
+    To create a github access token visit:
+    github -> settings -> developer settings -> personal access tokens.
     
-    :return: A Dictionary where the main key is "access_token".
+    :return: A Dictionary where the main key is "github_access_token".
     """
     questions = [inquirer.Password("access_token", message="Github access token")]
     answers = inquirer.prompt(questions)
-    return {"access_token": answers["access_token"]}
+    return {"github_access_token": answers["access_token"]}
 
 
 def ask_for_users():
@@ -119,18 +122,51 @@ def ask_for_repos():
     return {"repos": repos}
 
 
-def create_config(filename):
+def ask_for_jira_token():
+    """Ask the user for their jira access token.
+
+    To create a jira access token visit:
+    profile -> personal access tokens -> create token
+
+    :return: A Dictionary where the main key is "jira_access_token".
+    """
+    questions = [inquirer.Password("access_token", message="JIRA access token")]
+    answers = inquirer.prompt(questions)
+    return {"jira_access_token": answers["access_token"]}
+
+
+def ask_for_jira_url():
+    """Ask the user for their jira base url.
+
+    :return: A Dictionary where the main key is "jira url".
+    """
+    questions = [inquirer.Password("url", message="JIRA url")]
+    answers = inquirer.prompt(questions)
+    return {"jira_url": answers["url"]}
+
+
+def ask_for_jira_board_id():
+    """Ask the user for a jira board id. 
+
+    :return: A dictionary where the main key is "board_id".
+    """
+    questions = [inquirer.Password("board_id", message="JIRA Board ID")]
+    answers = inquirer.prompt(questions)
+    return {"board_id": answers["board_id"]}
+
+
+def create_config(filename, coordinate_with_jira=False):
     """Create a configuration for a yaml config file.
 
     :param filename: name of the configuration file that will be created.
+    :param coordinate_with_jira: When true ask for jira access information.
     """
+    call_functions = [ask_for_github_token, ask_for_users, ask_for_labels, ask_for_repos]
+    if coordinate_with_jira:
+        call_functions.extend([ask_for_jira_token, ask_for_jira_url, ask_for_jira_board_id])
+
     config = {}
-    for call_func in [
-        ask_for_token, 
-        ask_for_users, 
-        ask_for_labels, 
-        ask_for_repos
-    ]:
+    for call_func in call_functions:
         config.update(call_func())
     
     with open(filename, "w") as config_file:

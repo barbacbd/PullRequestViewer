@@ -21,7 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-VenvPath="/home/$USER/rh-gather-venv"
+VenvPath="rh-gather-venv"
 PyVersion=`python3 --version | awk '{print $2}'`
 MinPythonVersion="3.9.0"
 # temporary variable until the pypi package is available
@@ -33,9 +33,8 @@ else
     echo "ERROR: Python ${PyVersion} is less than minimum python version ${MinPythonVersion}"
 fi
 
-if [ ! -d "$VenvPath" ]; then
-    python3 -m venv $VenvPath
-fi
+# create the virtual environment
+python3 -m venv $VenvPath
 
 source $VenvPath/bin/activate
 
@@ -74,3 +73,5 @@ else
 fi
 
 deactivate
+
+rm -rf $VenvPath

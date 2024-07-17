@@ -22,55 +22,46 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 from os.path import exists
+from collections import OrderedDict
+from atlassian import Jira
 from github import Github
 from github.GithubException import BadCredentialsException
 from yaml import safe_load
 import pandas as pd
 
 
-def build_report(config_filename, output_filename):
-    """
+def _read_config(config_filename):
+    """Read in the config filename data.
 
-    :param config_filename: Name of the configuration (input) file where the yaml 
-    data will be loaded from.
-    :param output_filename: Excel file where the data will be output.
+    :return: YAML config data as a dictionary.
     """
     if not exists(config_filename):
         print(f"failed to find {config_filename}")
         return
 
-    # Parse the config.yaml file. If the file does not exist then the
-    # program will not execute.
-    access_token = None  # pylint: disable=invalid-name
-    users = []
-    repos = []
-    search_labels = []
-
     # pylint: disable=unspecified-encoding
     with open(config_filename, "r") as yaml_file:
         data = safe_load(yaml_file.read())
 
-        for key in ["access_token", "users", "repos"]:
+        for key in ["github_access_token", "users", "repos"]:
             if key not in data:
                 print(f"failed to find {key} in configuration file {config_filename}")
                 return
+    return data
 
-        access_token = data["access_token"]
-        users = data["users"]
-        repos = data["repos"]
 
-        # optional parameters
-        if "labels" in data:
-            search_labels = data["labels"]
+def access_github_info(access_token, users, repos, search_labels=[]):
+    """Parse the github information from the configuration file.
 
+    The following is a dictionary that will contain a list of tuples with
+    the format:
+    ( user, pull request title, pull request number, pull request url, ... (labels) )
+    Each tuple will be placed into the dictionary with the key for the repo.
+    The data will be stored as a sheet in an excel file that is generated
+    at the conclusion of this script.
+    """
     github_obj = Github(access_token)
 
-    # The following is a dictionary that will contain a list of tuples with
-    # the following format:
-    # ( user, pull request number, pull request url, pull request title, ... (labels) )
-    # Each tuple will be placed into the dictionary with the key for the repo.
-    # The data will be stored as a sheet in an excel file that is generated
-    # at the conclusion of this script.
     github_output = {}
 
     for repo_info in repos:
@@ -90,7 +81,6 @@ def build_report(config_filename, output_filename):
             print("github -> settings -> developer settings -> personal access tokens")
             return
 
-
         github_output[labeled_name] = []
 
         for pull_request in repo.get_pulls(state='open'):
@@ -109,6 +99,119 @@ def build_report(config_filename, output_filename):
                         pull_request.html_url,
                     ] + labels_values
                 )
+
+    return github_output
+
+
+def find_jira_issues(jira_access_token, jira_url, jira_board_id):
+    """Find all issues in the current sprint.
+    
+    :param jira_access_token: To create a jira access token visit:
+        profile -> personal access tokens -> create token.
+    :param jira_url: The base url for JIRA.
+    :param jira_board_id: The id of the jira board.
+    """
+    jira = Jira(url=jira_url, token=jira_access_token)
+
+    try:
+        _board_id = int(jira_board_id)
+    except TypeError:
+        print("failed to convert board id to integer")
+        return
+    
+    # get the active sprints in the board supplied by the user
+    jira_sprints = jira.get_all_sprints_from_board(_board_id, state="active")
+    
+    # find the only sprint listed that matches
+    sprint_data = [x for x in jira_sprints["values"] if x["originBoardId"] == _board_id]
+    if len(sprint_data) < 1:
+        print("failed to find current sprint data")
+        return
+    
+    sprint_data = sprint_data[0]
+
+    if "id"	not in sprint_data:
+        print("failed to find sprint id")
+        return
+
+    # Set the limit large for now, but this could be configured or 
+    # autmatically adjusted later
+    issues = jira.get_all_issues_for_sprint_in_board(_board_id, sprint_data["id"], limit=200)
+
+    if "issues" not	in issues:
+        print("failed to find sprint issues")
+        return
+
+    return [issue["key"] for issue in issues["issues"]]
+
+
+def coordinate_jira_data(github_data, jira_issues):
+    """Coordinate JIRA and Github information. This will find the github pull
+    reuqests that are open for current JIRA tickets in the open/active sprint.
+
+    :param github_data: A list of lists, 
+        ( user, pull request title, pull request number, pull request url, ... (labels) )
+    :param jira_issues: list of jira issue names
+
+    The following is a dictionary that will contain a list of tuples with
+    the format:
+    ( user, pull request title, pull request number, pull request url, ... (labels) )
+    Each tuple will be placed into the dictionary with the key for the repo.
+    The data will be stored as a sheet in an excel file that is generated
+    at the conclusion of this script.
+    """
+    output = []
+    for issue in jira_issues:
+        for _, github_prs in github_data.items():
+            # do not skip on check if one is found, sometimes
+            # there are multiple cards for a single jira issue.
+            for github_pr in github_prs:
+                if issue.lower() in github_pr[1].lower():
+                    output.append(github_pr)
+    
+    return output
+
+
+def build_report(config_filename, output_filename):
+    """Build the excel report
+
+    :param config_filename: Name of the configuration (input) file where the yaml 
+    data will be loaded from.
+    :param output_filename: Excel file where the data will be output.
+    """
+    config_data = _read_config(config_filename)
+    if config_data is None:
+        return
+
+    # Parse the config.yaml file. If the file does not exist then the
+    # program will not execute.
+    access_token = config_data["github_access_token"]  # pylint: disable=invalid-name
+    users = config_data["users"]
+    repos = config_data["repos"]
+
+    # These are optional args
+    search_labels = config_data["labels"] if "labels" in config_data else []
+    
+    jira_access_token = None  # pylint: disable=invalid-name
+    if "jira_access_token" in config_data:
+        jira_access_token = config_data["jira_access_token"]
+
+    jira_url = None  # pylint: disable=invalid-name
+    if "jira_url" in config_data:
+        jira_url = config_data["jira_url"]
+
+    jira_board_id = None  # pylint: disable=invalid-name
+    if "board_id" in config_data:
+        jira_board_id = config_data["board_id"]
+
+    github_output = access_github_info(access_token, users, repos, search_labels=search_labels)
+    github_output = OrderedDict(github_output)
+
+    if None not in (jira_access_token, jira_url, jira_board_id):
+        jira_issues = find_jira_issues(jira_access_token, jira_url, jira_board_id)
+        jira_github_coordinated_output = coordinate_jira_data(github_output, jira_issues)
+        github_output["jira"] = jira_github_coordinated_output
+        github_output.move_to_end("jira", last=False)
 
     columns = [
         "Author",

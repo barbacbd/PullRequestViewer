@@ -35,6 +35,10 @@ def main():
         action=argparse.BooleanOptionalAction
     )
     parser.add_argument(
+        '--coordinate_with_jira',
+        action=argparse.BooleanOptionalAction
+    )
+    parser.add_argument(
         "--input",
         dest="input_file",
         default="config.yaml",
@@ -49,7 +53,7 @@ def main():
     args = parser.parse_args()
 
     if args.config:
-        create_config(args.input_file)
+        create_config(args.input_file, args.coordinate_with_jira)
 
     build_report(args.input_file, args.output_file)
 
