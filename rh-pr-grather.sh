@@ -78,7 +78,7 @@ if [ -f "config.yaml" ]; then
     echo "WARN: config.yaml found. Skipping the config step for rh-pr-gather"
     rh-pr-gather --input config.yaml
 else
-    if "$ConfigJira" ; then
+    if "$JiraConfig" ; then
 	rh-pr-gather --config --coordinate_with_jia
     else
 	rh-pr-gather --config
