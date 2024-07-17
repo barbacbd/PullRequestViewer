@@ -79,7 +79,7 @@ if [ -f "config.yaml" ]; then
     rh-pr-gather --input config.yaml
 else
     if "$JiraConfig" ; then
-	rh-pr-gather --config --coordinate_with_jia
+	rh-pr-gather --config --coordinate_with_jira
     else
 	rh-pr-gather --config
     fi
