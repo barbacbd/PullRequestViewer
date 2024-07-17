@@ -28,11 +28,21 @@ MinPythonVersion="3.9.0"
 UsePyPi=false
 JiraConfig=false
 
-while getopts pj flag
+while getopts pjh flag
 do
     case "${flag}" in
 	p) UsePyPi=true;;
 	j) JiraConfig=true;;
+	h)
+	    echo "RH PR Gather"
+	    echo ""
+	    echo "  -p    UsePyPi:      When applied, the package will be pulled from PyPi."
+	    echo "                      Default behavior will pull the latest code from the"
+	    echo "                      main branch of the github project."
+	    echo " -j     JiraConfig:   When applied, Jira configuration information will be"
+	    echo "                      prompted."
+	    echo " -h     Help"
+	    exit 1
     esac
 done
 
