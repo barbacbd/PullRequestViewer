@@ -140,7 +140,7 @@ def ask_for_jira_url():
 
     :return: A Dictionary where the main key is "jira url".
     """
-    questions = [inquirer.Password("url", message="JIRA url")]
+    questions = [inquirer.Text("url", message="JIRA url")]
     answers = inquirer.prompt(questions)
     return {"jira_url": answers["url"]}
 
@@ -150,7 +150,7 @@ def ask_for_jira_board_id():
 
     :return: A dictionary where the main key is "board_id".
     """
-    questions = [inquirer.Password("board_id", message="JIRA Board ID")]
+    questions = [inquirer.Text("board_id", message="JIRA Board ID")]
     answers = inquirer.prompt(questions)
     return {"board_id": answers["board_id"]}
 
