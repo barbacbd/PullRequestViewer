@@ -26,6 +26,15 @@ PyVersion=`python3 --version | awk '{print $2}'`
 MinPythonVersion="3.9.0"
 # temporary variable until the pypi package is available
 UsePyPi=false
+JiraConfig=false
+
+while getopts pj flag
+do
+    case "${flag}" in
+	p) UsePyPi=true;;
+	j) JiraConfig=true;;
+    esac
+done
 
 if [ "$(printf '%s\n' "$MinPythonVersion" "$PyVersion" | sort -V | head -n1)" = "$MinPythonVersion" ]; then 
     echo "Current python version ${PyVersion} is greater than or equal to ${MinPythonVersion}"
@@ -69,7 +78,11 @@ if [ -f "config.yaml" ]; then
     echo "WARN: config.yaml found. Skipping the config step for rh-pr-gather"
     rh-pr-gather --input config.yaml
 else
-    rh-pr-gather --config
+    if "$ConfigJira" ; then
+	rh-pr-gather --config --coordinate_with_jia
+    else
+	rh-pr-gather --config
+    fi
 fi
 
 deactivate
